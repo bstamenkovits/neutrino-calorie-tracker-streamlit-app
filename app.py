@@ -7,9 +7,25 @@ from core.models import FoodLog, Combination, AvailableIngredient, User, Availab
 
 st.title("Overview")
 
-user:User = st.selectbox("Select a user", options=db.list_users(), format_func=lambda x: x.name)
-date = datetime.date.today()
+# user:User = st.selectbox("Select a user", options=db.list_users(), format_func=lambda x: x.name)
+user:User = st.segmented_control("Select a user", options=db.list_users(), format_func=lambda x: x.name)
+date = st.date_input("Select a date", datetime.date.today())
 
+if not user:
+    st.error("Please select a user")
+    st.stop()
+
+
+food_data = db.list_food_summary(
+    user_id=user.id,
+    consumed_on=date
+)
+total_calories = sum([food.total_calories_kcal for food in food_data])
+st.write(f"**{user.name}**")
+st.write(f"Total calories: {total_calories} kcal")
+
+
+st.divider()
 
 def on_ingredient_change(food_log_id, ingredient_dropdown_id):
     new_ingredient_id = st.session_state[ingredient_dropdown_id].id
@@ -29,6 +45,14 @@ def on_combination_change(food_log_id, combination_dropdown_id):
         food_log_id=food_log_id,
         column_name="serving_id",
         value=new_serving_id,
+    )
+
+def on_quantity_change(food_log_id, quantity_input_id):
+    new_quantity = st.session_state[quantity_input_id]
+    db.update_food_log_column(
+        food_log_id=food_log_id,
+        column_name="quantity",
+        value=new_quantity,
     )
 
 
@@ -76,6 +100,7 @@ for meal in meals:
                 args=(food_item.id, combination_key),
             )
 
+            quantity_key = f'food_log__{meal.name}__{food_item.id}__quantity'
             quantity = st.number_input(
                 label="Enter quantity",
                 value=float(food_item.quantity),
@@ -84,6 +109,8 @@ for meal in meals:
                 step=1.,
                 format="%f",
                 key=f'food_log__{meal.name}__{food_item.id}__quantity',
+                on_change=on_quantity_change,
+                args=(food_item.id, quantity_key),
             )
 
             st.write(f"**{food_item.total_calories_kcal:.0f} kcal** ({food_item.total_weight_g:.0f} g)")
