@@ -4,10 +4,10 @@ import datetime
 import time
 
 from core.models import FoodLog, Combination, AvailableIngredient, User, AvailableMeal
+from core.calories_consumed_chart import construct_bar_chart
 
 st.title("Overview")
 
-# user:User = st.selectbox("Select a user", options=db.list_users(), format_func=lambda x: x.name)
 user:User = st.segmented_control("Select a user", options=db.list_users(), format_func=lambda x: x.name)
 date = st.date_input("Select a date", datetime.date.today())
 
@@ -22,7 +22,9 @@ food_data = db.list_food_summary(
 )
 total_calories = sum([food.total_calories_kcal for food in food_data])
 st.write(f"**{user.name}**")
-st.write(f"Total calories: {total_calories} kcal")
+st.write(f"## Total calories: `{total_calories:.0f}` kcal")
+
+st.plotly_chart(construct_bar_chart(consumed=total_calories, total_allowed=2500))
 
 
 st.divider()
@@ -66,7 +68,7 @@ for meal in meals:
         meal_name=meal.name
     )
     total_calories = sum([food.total_calories_kcal for food in meal_data])
-    title = f"**{meal.name}: {total_calories:.0f} kcal**"
+    title = f"**{meal.name}: `{total_calories:.0f}` kcal**"
     st.write(title)
     with st.expander("details", key=f'expander__food_log__{meal.name}', on_change="rerun"):
         for food_item in meal_data:
@@ -113,7 +115,14 @@ for meal in meals:
                 args=(food_item.id, quantity_key),
             )
 
+            # c1, c2 = st.columns(2)
+            # with c1:
             st.write(f"**{food_item.total_calories_kcal:.0f} kcal** ({food_item.total_weight_g:.0f} g)")
+            # with c2:
+            if st.button("Delete", key=f'button__food_log__delete__{meal.name}__{food_item.id}'):
+                db.delete_food_log(food_log_id=food_item.id)
+                st.success("Food Item Deleted")
+                st.rerun()
 
             st.divider()
 

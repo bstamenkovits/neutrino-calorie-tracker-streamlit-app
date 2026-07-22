@@ -1,3 +1,4 @@
+import uuid
 from typing import Any
 
 import streamlit as st
@@ -59,10 +60,14 @@ def insert_food_log(food_log:FoodLog):
     food_log_data = food_log.model_dump(mode='json')
     db.schema("app").table("food_logs").insert(food_log_data).execute()
 
-
 def update_food_log(food_log:FoodLog):
     food_log_data = food_log.model_dump(mode='json')
     query = db.schema("app").table("food_logs").update(food_log_data).eq("id", food_log.id)
+    response = query.execute()
+    return response.data
+
+def delete_food_log(food_log_id: str | uuid.UUID):
+    query = db.schema("app").table("food_logs").delete().eq("id", food_log_id)
     response = query.execute()
     return response.data
 
