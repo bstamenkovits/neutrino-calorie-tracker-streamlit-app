@@ -3,3 +3,5 @@ supabase
 pydantic
 streamlit[charts]
 scipy
+anthropic
+rapidfuzz

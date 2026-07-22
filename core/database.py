@@ -111,6 +111,14 @@ def list_food_summary(
     return [FoodSummary(**food_summary) for food_summary in response.data]
 
 
+def preview_food_log(ingredient_id: str, serving_id: str, quantity: float) -> str:
+    ingredient = db.schema("app").table("ingredients").select("*").eq("id", ingredient_id).execute().data[0]
+    serving = db.schema("app").table("servings").select("*").eq("id", serving_id).execute().data[0]
+
+    weight = serving.get('size_g') * quantity
+    calories = ingredient.get('calories_kcal') * weight / 100
+    return f"{quantity} {serving['name']} of {ingredient['name']} - {calories:.0f} kcal, {weight:.0f}g"
+
 
 
 
