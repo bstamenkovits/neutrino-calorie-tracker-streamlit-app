@@ -17,18 +17,21 @@ db:Client = create_client(
     SUPABASE_KEY
 )
 
-
 def new_user(email, password):
     db.auth.sign_up(dict(
         email=email,
         password=password
     ))
 
-
 def list_users() -> list[User]:
-    # return db.schema("auth").table("users").select('*').execute()
-    user_data = db.auth.admin.list_users()
-    return [User(id=user.id, name=user.email) for user in user_data]
+    for _ in range(10):
+        try:
+            user_data = db.auth.admin.list_users()
+            return [User(id=user.id, name=user.email) for user in user_data]
+        except Exception as e:
+            message = "Failed to fetch users: \n" + str(e)
+            st.error(message)
+            continue
 
 
 @ttl_cache(minutes=10)

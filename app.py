@@ -70,9 +70,12 @@ for meal in meals:
     total_calories = sum([food.total_calories_kcal for food in meal_data])
     title = f"**{meal.name}: `{total_calories:.0f}` kcal**"
     st.write(title)
-    with st.expander("details", key=f'expander__food_log__{meal.name}', on_change="rerun"):
-        for food_item in meal_data:
-            available_ingredients = db.list_ingredients()
+    available_ingredients = db.list_ingredients()
+
+    # with st.expander("details", key=f'expander__food_log__{meal.name}', on_change="rerun"):
+    for food_item in meal_data:
+        ingredient_label = f"{food_item.name}: {food_item.quantity} {food_item.serving_name} - {food_item.total_calories_kcal:.0f} kcal"
+        with st.expander(ingredient_label, key=f'expander__food_log__{meal.name}__{food_item.id}__ingredient_details'):
 
             active_ingredient_idx = next(
                 (i for i, ingredient in enumerate(available_ingredients)
@@ -115,26 +118,24 @@ for meal in meals:
                 args=(food_item.id, quantity_key),
             )
 
-            # c1, c2 = st.columns(2)
-            # with c1:
             st.write(f"**{food_item.total_calories_kcal:.0f} kcal** ({food_item.total_weight_g:.0f} g)")
-            # with c2:
+
             if st.button("Delete", key=f'button__food_log__delete__{meal.name}__{food_item.id}'):
                 db.delete_food_log(food_log_id=food_item.id)
                 st.success("Food Item Deleted")
                 st.rerun()
 
-            st.divider()
+        # st.divider()
 
-        if st.button("Add Food Item", key=f'button__food_log__add_item__{meal.name}'):
-            db.insert_food_log(food_log=FoodLog(
-                user_id=user.id,
-                meal_id=meal.id,
-                ingredient_id=available_ingredients[0].id,
-                serving_id=db.get_ingredient_serving_combinations([available_ingredients[0].id])[0].serving_id,
-                quantity=1,
-            ))
-            st.success("New Food Item Added")
-            time.sleep(1)
-            st.rerun()
+    if st.button("Add Food Item", key=f'button__food_log__add_item__{meal.name}'):
+        db.insert_food_log(food_log=FoodLog(
+            user_id=user.id,
+            meal_id=meal.id,
+            ingredient_id=available_ingredients[0].id,
+            serving_id=db.get_ingredient_serving_combinations([available_ingredients[0].id])[0].serving_id,
+            quantity=1,
+            consumed_on=date,
+        ))
+        st.success("New Food Item Added")
+        st.rerun()
 
